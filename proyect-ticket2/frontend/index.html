@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Tickets</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    form { margin-bottom: 30px; background: #f5f5f5; padding: 20px; border-radius: 8px; }
+    input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>Sistema de Tickets de Mantenimiento</h1>
+  
+  <form id="clienteForm">
+    <h2>Nuevo Ticket</h2>
+    <input type="text" name="nombre" placeholder="Nombre del cliente" required>
+    <input type="text" name="contacto" placeholder="Teléfono" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="computadora" placeholder="Modelo de computadora" required>
+    <textarea name="problema" placeholder="Descripción del problema" rows="3" required></textarea>
+    <textarea name="diagnostico" placeholder="Diagnóstico inicial" rows="3" required></textarea>
+    <button type="submit">Registrar Ticket</button>
+  </form>
+
+  <h2>Tickets Registrados</h2>
+  <table id="clientesTable">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Contacto</th>
+        <th>Email</th>
+        <th>Computadora</th>
+        <th>Problema</th>
+        <th>Diagnóstico</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('clienteForm');
+    const tableBody = document.querySelector('#clientesTable tbody');
+
+    // Enviar formulario
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('http://localhost:3000/api/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          alert('Ticket registrado con éxito');
+          form.reset();
+          cargarTickets();
+        } else {
+          const errorData = await response.json();
+          alert(`Error: ${errorData.error || 'No se pudo registrar'}`);
+        }
+      } catch (error) {
+        alert('Error de conexión con el servidor');
+      }
+    });
+
+    // Cargar tickets
+    async function cargarTickets() {
+      try {
+        const response = await fetch('http://localhost:3000/api/clientes');
+        const tickets = await response.json();
+
+        tableBody.innerHTML = '';
+        tickets.forEach(ticket => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${ticket.nombre}</td>
+            <td>${ticket.contacto}</td>
+            <td>${ticket.email}</td>
+            <td>${ticket.computadora}</td>
+            <td>${ticket.problema}</td>
+            <td>${ticket.diagnostico}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error cargando tickets:', error);
+      }
+    }
+
+    // Iniciar
+    document.addEventListener('DOMContentLoaded', cargarTickets);
+  </script>
+</body>
+</html>
